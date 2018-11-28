@@ -1,0 +1,175 @@
+package npAssign;
+
+import java.awt.event.*;
+import java.io.*;
+import java.net.*;
+import java.util.logging.*;
+import com.google.gson.*;
+import static java.util.logging.Level.*;
+
+public class MultiChatController implements Runnable {
+
+	// �� Ŭ���� ���� ��ü
+	private final MultiChatUI v;
+	
+	// ������ Ŭ���� ���� ��ü
+	private final MultiChatData chatData;
+	
+	// ���� ������ ���� ���� ����
+	private String ip = "203.252.148.148";
+	private Socket socket;
+	private BufferedReader inMsg = null;
+	private PrintWriter outMsg = null;
+	
+	// �޽��� �Ľ��� ���� ��ü ����
+	Gson gson = new Gson();
+	Message m;
+	
+	// ���� �÷���
+	boolean status;
+	
+	// �ΰ� ��ü
+	Logger logger;
+	
+	// �޼��� ���� ������
+	Thread thread;
+	
+	/**
+	 * �𵨰� �� ��ü�� �Ķ���ͷ� �ϴ� ������
+	 * @param chatData
+	 * @param v
+	 */
+	public MultiChatController(MultiChatData chatData, MultiChatUI v) {
+		// �ΰ� ��ü �ʱ�ȭ
+		logger = Logger.getGlobal();
+		// MultiChatData, MultiChatUI ��ü �ʱ�ȭ
+		this.chatData = chatData;
+		this.v = v;
+	}
+	
+	/**
+	 * ���ø����̼� ���� ���� �޼���
+	 */
+	public void appMain() {
+		// ������ ��ü(chatData)���� (ä�ó��� ���â��) ������ ��ȭ�� ó���� UI��ü �߰�
+		chatData.addObj(v.msgOut);
+		
+		v.addButtonActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub
+				Object obj = e.getSource();
+				
+				// �����ư, �α��ι�ư, �α׾ƿ���ư, �޽������۹�ư(����) ó��
+				if(obj == v.exitButton) {
+					System.exit(0);					
+				} else if(obj == v.loginButton) {
+					v.id = v.idInput.getText();
+                    v.outLabel.setText("대화명 : " + v.id);
+                    v.cardLayout.show(v.tab, "logout");                   
+                    connectServer();
+				} else if(obj == v.logoutButton) {
+					// �α׾ƿ� �޽��� ����
+					outMsg.println(gson.toJson(new Message(v.id,"","","logout")));
+					outMsg.flush();
+					// ��ȭâ Ŭ����
+                    v.msgOut.setText("");
+					// �α��� �гη� ��ȯ �� ����/��Ʈ�� �ݱ� + status ������Ʈ
+					try {
+						v.cardLayout.show(v.tab, "login");
+						v.idInput.setText("");
+						socket.close();
+						outMsg.close();
+						inMsg.close();
+						status = false;
+					} catch (IOException ex) {
+						// TODO Auto-generated catch block
+						ex.printStackTrace();
+					}
+				} else if(obj == v.msgInput) {
+					// �Էµ� �޽��� ���� (���� �α׾ƿ� �޽��� �����ڵ�� Message ������ ����)
+					outMsg.println(gson.toJson(new Message(v.id,"",v.msgInput.getText(),"msg")));
+					
+					// �Է�â Ŭ����
+					v.msgInput.setText("");
+				}
+				
+			}
+			
+		});
+	}
+	
+	/**
+	 * ���� ������ ���� �޼��� (����ʵ带 ���� Ȱ���ϱ� �ٶ�; �� �޼��� �ȿ��� ���Ӱ� ������ �ʿ��� ������ ����)
+	 */
+	
+	public void connectServer() {
+		try {
+			// ���� ���� (ip, port�� ���Ƿ� �����ϵ� ���߿� �������� ��Ե� ��Ʈ�� �����ؾ���)
+			socket = new Socket(ip,8888);
+			
+			// INFO ���� �α� (���� ���ῡ �����ߴٴ� �޽��� ȭ�鿡 ���)
+			logger.log(INFO,"서버 연결 성공!!");
+			
+			// �����(inMsg, outMsg) ��Ʈ�� ����
+			inMsg = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			outMsg = new PrintWriter(socket.getOutputStream());
+			
+			// ������ �α��� �޽��� ����
+			outMsg.println(gson.toJson(new Message(v.id,"","","login")));
+			outMsg.flush();
+			// �޽��� ������ ���� ������ (thread) ���� �� ��ŸƮ
+			thread = new Thread(this);
+			thread.start();
+		}
+		catch(Exception e) {
+			logger.log(WARNING, "[MultiChatUI]connectServer() Exception 발생!!");
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * �޽��� ������ ���������� ó���ϱ� ���� ������ ����
+	 */
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		// ���� �޽��� ó���� ���� ����
+		String msg;
+		
+		// status ������Ʈ
+		status = true;
+		
+		while(status) {
+			try {
+				// �޽��� ����
+				 msg = inMsg.readLine();
+
+				// �޽��� �Ľ�
+				m = gson.fromJson(msg, Message.class);
+				
+				// MultiChatData ��ü�� ���� ������ ����
+				chatData.refreshData(m.getId()+">" + m.getMsg() + "\n");
+				
+				// Ŀ���� ���� ��ȭ �޽����� ������
+				v.msgOut.setCaretPosition(v.msgOut.getDocument().getLength());
+			}
+			catch(IOException e) {
+				logger.log(WARNING,"[MultiChatUI]메시지 스트림 종료!!");
+			}
+			
+		}
+		logger.info("[MultiChatUI]"+thread.getName()+" 메시지 수신 스레드 종료됨!!");
+	}
+	
+	// ���α׷� ������ ���� ���� �޼���
+	public static void main(String[] args) {
+		//MultiChatController ��ü ���� �� appMain() ����
+		MultiChatData data = new MultiChatData();
+		MultiChatUI v = new MultiChatUI();
+		MultiChatController m = new MultiChatController(data,v);
+		m.appMain();
+	}
+
+}
+

@@ -1,0 +1,173 @@
+package npAssign;
+
+import java.awt.*;
+import java.awt.event.*;
+import java.io.IOException;
+
+import javax.swing.*;
+
+public class MultiChatUI extends JFrame{
+
+    // �α��� �г�
+    private JPanel loginPanel;
+    // �α��� ��ư
+    protected JButton loginButton;
+
+    // ��ȭ�� ��
+    private JLabel inLabel;
+    // ��ȭ�� ��� ��
+    protected JLabel outLabel;
+    // ��ȭ�� �Է� �ؽ�Ʈ�ʵ�
+    protected JTextField idInput;
+
+    // �α׾ƿ� �г�
+    private JPanel logoutPanel;
+    // �α׾ƿ� ��ư
+    protected JButton logoutButton;
+
+    // �޽��� �Է�  �г� ����
+    private JPanel msgPanel;
+    // �޽��� �Է� �ؽ�Ʈ�ʵ�
+    protected JTextField msgInput;
+    // ���� ��ư
+    protected JButton exitButton;
+
+    // ä�� ���� ���â
+    protected JTextArea msgOut;
+
+    // ȭ�� ���� ��ȯ�� ���� ī�巹�̾ƿ�
+    protected Container tab;
+    protected CardLayout cardLayout;
+
+    // �α��� ���̵� ���� �ʵ�
+    protected String id;
+
+    // ������
+    public MultiChatUI() {
+    	
+        // ���� ������ ����
+    	setTitle("::멀티챗::");
+    	
+        // �α��� �г� ȭ�� ���� (JPanel)
+    	loginPanel = new JPanel(new BorderLayout());
+        
+    	// �α��� �г� ���̾ƿ� ����
+    	loginPanel.setLayout(new BorderLayout());
+        
+    	// �α��� �Է��ʵ�/��ư ����
+    	inLabel = new JLabel("대화명");
+    	idInput = new JTextField(20);
+    	loginButton = new JButton("로그인");
+        
+    	// �α��� �гο� ���� ���� (add�޼ҵ��̿��Ͽ� ������ ������ �ʵ�/��ư �� �гο� �߰�)
+    	loginPanel.add(inLabel,BorderLayout.WEST);
+    	loginPanel.add(idInput,BorderLayout.CENTER);
+    	loginPanel.add(loginButton,BorderLayout.EAST);
+        
+    	// �α׾ƿ� �г� ����(JPanel)
+    	logoutPanel = new JPanel();
+        
+    	// �α׾ƿ� �г� ���̾ƿ� ����
+    	logoutPanel.setLayout(new BorderLayout());
+    	outLabel = new JLabel("대화명 : ");
+    	logoutButton = new JButton("로그아웃");
+        
+    	// �α׾ƿ� �гο� ���� ����
+    	logoutPanel.add(outLabel,BorderLayout.CENTER);
+    	logoutPanel.add(logoutButton,BorderLayout.EAST);
+        
+    	// �޽��� �Է� �г� ���� (JPanel)
+    	msgPanel = new JPanel();
+        
+    	// ���̾ƿ� ����
+    	msgPanel.setSize(500,50);
+        
+    	// �޽��� �Է� �гο� ���� ����
+    	msgInput = new JTextField(40);
+    	exitButton = new JButton("종료");
+    	msgPanel.add(msgInput);
+    	msgPanel.add(exitButton);
+        
+    	// �α���/�α׾ƿ� �г� ������ ���� CardLayout �г�
+    	tab = new Container();
+    	cardLayout = new CardLayout();
+    	tab.setLayout(cardLayout);
+    	tab.add("login",loginPanel);
+    	tab.add("logout",logoutPanel);
+        
+    	// �޽��� ��� ���� �ʱ�ȭ
+    	msgOut = new JTextArea("",10,30);
+        
+    	// JTextArea �� ������ �������� ���ϵ��� ��. �� ����������� ���
+    	msgOut.setEditable(false);
+        
+    	// �޽��� ���(msgOut) ���� ��ũ�ѹ� ����, ���� ��ũ�ѹٴ� �׻� ��Ÿ���� ���� ��ũ�ѹٴ� �ʿ�� ��Ÿ������ ��. (JScrollPane)
+    	JScrollPane jsp = new JScrollPane(msgOut,JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        
+    	// ���� �����ӿ� �г� ��ġ (tab, jsp, msgPanel)
+    	add(tab,BorderLayout.NORTH);
+    	add(msgPanel,BorderLayout.SOUTH);
+    	add(jsp,BorderLayout.CENTER);
+        
+    	// loginPanel �� �켱 ���̵��� ��.
+    	cardLayout.show(tab, "login");
+        
+    	// ������ ũ�� �ڵ����� ����
+    	pack();
+        
+    	// ������ ũ�� ���� �Ұ� ����
+    	setResizable(false);
+        
+    	// �������� ���������� ��
+    	setVisible(true);
+    }
+
+    /**
+     * �̺�Ʈ ������ ����� ���� �޼���� �Ķ������ ������ ��ü�� ��Ʈ�ѷ����� ������ ��ü�� ��.
+     * ���� ���� �̺�Ʈ ó���� ��Ʈ�ѷ� Ŭ���� �ڵ带 ����.
+     * @param listener
+     */
+    public void addButtonActionListener(ActionListener listener) {
+        // �̺�Ʈ ������ ���
+    	loginButton.addActionListener(listener);
+    	logoutButton.addActionListener(listener);
+    	msgInput.addActionListener(listener);
+    	exitButton.addActionListener(listener);
+    }
+    
+    
+    /* this main() method is here only for testing UI, and should be deleted or commented out later
+    public static void main(String[] args) {
+    	
+    	MultiChatUI v = new MultiChatUI();
+    	
+    	v.addButtonActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Object obj = e.getSource();
+
+                // �����ư ó��
+                if (obj == v.exitButton) {
+                    System.exit(0);
+                } else if (obj == v.loginButton) {
+                    v.id = v.idInput.getText();
+                    v.outLabel.setText(" ��ȭ�� : " + v.id);
+                    v.cardLayout.show(v.tab, "logout");
+                    // *****�ӽ� ���*****
+                    v.msgOut.setText(v.id+">���� �α��� �߽��ϴ�.");
+                } else if (obj == v.logoutButton) {
+                    // ��ȭâ Ŭ����
+                    v.msgOut.setText("");
+                    // �α��� �гη� ��ȯ
+                    v.cardLayout.show(v.tab, "login");
+                    // �α׾ƿ� �� ID�Է�â Ŭ����
+                    v.idInput.setText("");
+                } else if (obj == v.msgInput) {
+                    // �Է�â Ŭ����
+                    v.msgInput.setText("");
+                }
+            }
+        });
+    } //delete or comment out this method when working with MultiChatController*/
+}
+
